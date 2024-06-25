@@ -22,10 +22,13 @@ You can install these libraries using pip:
 
 ```bash
 pip install numpy matplotlib
+```
 
 ## Usage
 Clone this repository to your local machine and run the simulation:
-
+```bash
 git clone https://github.com/yourusername/double-inverse-pendulum.git
 cd double-inverse-pendulum
 python simulation.py
+```
+
