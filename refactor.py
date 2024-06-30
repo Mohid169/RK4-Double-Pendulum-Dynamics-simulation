@@ -37,8 +37,8 @@ def runge_kutta(c1: float, c2: float, g: float, t1: np.ndarray, t2: np.ndarray, 
     Performs Runge-Kutta integration to solve the differential equations.
 
     Args:
-        c1: Length of the first pendulum.
-        c2: Length of the second pendulum.
+        c1: Length of the first pendulum relative to verticle.
+        c2: Length of the second pendulum relative to verticle.
         g: Acceleration due to gravity.
         t1: Array of angles for the first pendulum.
         t2: Array of angles for the second pendulum.
