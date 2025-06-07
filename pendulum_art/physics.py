@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class DoublePendulum:
     def __init__(self, l1=1.0, l2=0.5, m1=1.0, m2=1.0, g=9.81):
         # Link lengths
@@ -16,7 +17,7 @@ class DoublePendulum:
         Compute [dθ1, dθ2, dω1, dω2] for state [θ1, θ2, ω1, ω2].
         """
         theta1, theta2, omega1, omega2 = state
-        
+
         # Trigonometric shorthands
         sin_t1 = np.sin(theta1)
         sin_t2 = np.sin(theta2)
@@ -34,7 +35,9 @@ class DoublePendulum:
         ) / denom
 
         alpha2 = (
-            2 * sin_diff * (
+            2
+            * sin_diff
+            * (
                 2 * self.l1 * omega1**2
                 + 2 * self.g * np.cos(theta1)
                 + self.l2 * omega2**2 * cos_diff
