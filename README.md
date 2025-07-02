@@ -2,7 +2,7 @@
 
 An interactive double pendulum simulation that creates beautiful art through chaotic motion. Watch as the mathematically chaotic behavior of a double pendulum creates stunning, unique patterns that you can paint in real-time.
 
-![Double Pendulum Art Demo](Output.png)
+
 
 ## ✨ Features
 
@@ -201,13 +201,6 @@ mypy pendulum_art/
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Inspired by the mathematical beauty of chaotic systems
-- Built with Python's excellent scientific computing ecosystem
-- Physics equations derived from classical mechanics textbooks
-- Thanks to the open source community for the underlying libraries
 
 ## 📚 Educational Use
 
