@@ -14,16 +14,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
     from pendulum_art.utils import create_preset_pack
-    
+
     def main():
         print("🎨 Double Pendulum Art - Preset Generator")
         print("=" * 45)
         print()
-        
+
         print("Generating preset files...")
         num_presets = create_preset_pack()
-        
-        print(f"✅ Successfully created {num_presets} preset files in the 'presets' directory!")
+
+        print(
+            f"✅ Successfully created {num_presets} preset files in the 'presets' directory!"
+        )
         print()
         print("Presets include:")
         print("- Chaos patterns (unpredictable, beautiful motion)")
@@ -44,10 +46,10 @@ try:
         print("3. Press 'H' for help and full controls")
         print()
         print("Have fun creating art with chaotic motion! 🌟")
-        
+
     if __name__ == "__main__":
         main()
-        
+
 except ImportError as e:
     print("❌ Error: Missing dependencies!")
     print("Please install required packages:")
@@ -56,4 +58,4 @@ except ImportError as e:
     sys.exit(1)
 except Exception as e:
     print(f"❌ Error creating presets: {e}")
-    sys.exit(1) 
+    sys.exit(1)
