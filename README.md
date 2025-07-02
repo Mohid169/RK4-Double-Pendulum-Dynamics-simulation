@@ -202,13 +202,6 @@ mypy pendulum_art/
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- Inspired by the mathematical beauty of chaotic systems
-- Built with Python's excellent scientific computing ecosystem
-- Physics equations derived from classical mechanics textbooks
-- Thanks to the open source community for the underlying libraries
-
 ## 📚 Educational Use
 
 This project is perfect for:
