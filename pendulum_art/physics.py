@@ -116,21 +116,23 @@ class DoublePendulum:
     def tip_positions(self, state):
         """
         Convert angles [θ1, θ2] to cartesian coords (x1,y1), (x2,y2).
-        
+
         Uses screen-friendly coordinates where positive y goes UP.
         θ=0 corresponds to hanging straight down.
         This makes the physics visually intuitive - pendulum falls from unstable positions.
         """
         theta1, theta2 = state[0], state[1]
-        
+
         # First pendulum bob position (from pivot)
         x1 = self.l1 * np.sin(theta1)
         y1 = self.l1 * np.cos(theta1)  # Positive y goes UP now
-        
+
         # Second pendulum bob position (tip of the double pendulum)
         x2 = self.l1 * np.sin(theta1) + self.l2 * np.sin(theta2)
-        y2 = self.l1 * np.cos(theta1) + self.l2 * np.cos(theta2)  # Positive y goes UP now
-        
+        y2 = self.l1 * np.cos(theta1) + self.l2 * np.cos(
+            theta2
+        )  # Positive y goes UP now
+
         return (x1, y1), (x2, y2)
 
     def total_energy(self, state):
@@ -139,7 +141,7 @@ class DoublePendulum:
         Updated for the flipped coordinate system where positive y goes up.
         """
         theta1, theta2, omega1, omega2 = state
-        
+
         # Kinetic energy (same as before)
         kinetic = (
             0.5
@@ -150,13 +152,11 @@ class DoublePendulum:
                 + 2 * self.l1 * self.l2 * omega1 * omega2 * np.cos(theta1 - theta2)
             )
         )
-        
+
         # Potential energy (flipped sign due to y-coordinate flip)
         # Now higher y means higher potential energy
         potential = (
-            self.m1
-            * self.g
-            * (2 * self.l1 * np.cos(theta1) + self.l2 * np.cos(theta2))
+            self.m1 * self.g * (2 * self.l1 * np.cos(theta1) + self.l2 * np.cos(theta2))
         )
-        
+
         return kinetic + potential

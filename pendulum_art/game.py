@@ -22,7 +22,9 @@ class PendulumArtGame:
 
         # Initial state: [theta1, theta2, omega1, omega2]
         # Use the original simulation.py initial state that produces chaotic behavior
-        self.initial_state = np.array([-np.pi / 3, -5 * np.pi / 6, 0.0, 0.0])  # Original chaotic state
+        self.initial_state = np.array(
+            [-np.pi / 3, -5 * np.pi / 6, 0.0, 0.0]
+        )  # Original chaotic state
         self.state = self.initial_state.copy()
 
         # Canvas for persistent painting
