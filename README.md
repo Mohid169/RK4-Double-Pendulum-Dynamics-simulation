@@ -2,7 +2,7 @@
 
 An interactive double pendulum simulation that creates beautiful art through chaotic motion. Watch as the mathematically chaotic behavior of a double pendulum creates stunning, unique patterns that you can paint in real-time.
 
-![Double Pendulum Art Demo](Output.png)
+
 
 ## ✨ Features
 
