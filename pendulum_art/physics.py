@@ -116,43 +116,31 @@ class DoublePendulum:
     def tip_positions(self, state):
         """
         Convert angles [θ1, θ2] to cartesian coords (x1,y1), (x2,y2).
-
-        Uses the same coordinate system as the original simulation.py:
-        - θ=0 corresponds to hanging straight down
-        - Positive y is downward (screen coordinates)
-
-        The original position calculations were:
-        mx1[i] = c1 * np.sin(t1[i]) + c2 * np.sin(t2[i])
-        my1[i] = -c1 * np.cos(t1[i]) - c2 * np.cos(t2[i])
-
-        But those seem to be for the tip of the second pendulum, not individual bobs.
+        
+        Uses screen-friendly coordinates where positive y goes UP.
+        θ=0 corresponds to hanging straight down.
+        This makes the physics visually intuitive - pendulum falls from unstable positions.
         """
         theta1, theta2 = state[0], state[1]
-
+        
         # First pendulum bob position (from pivot)
         x1 = self.l1 * np.sin(theta1)
-        y1 = -self.l1 * np.cos(theta1)  # Negative because y increases downward
-
+        y1 = self.l1 * np.cos(theta1)  # Positive y goes UP now
+        
         # Second pendulum bob position (tip of the double pendulum)
-        # This matches the original: c1 * sin(t1) + c2 * sin(t2)
         x2 = self.l1 * np.sin(theta1) + self.l2 * np.sin(theta2)
-        y2 = -self.l1 * np.cos(theta1) - self.l2 * np.cos(theta2)
-
+        y2 = self.l1 * np.cos(theta1) + self.l2 * np.cos(theta2)  # Positive y goes UP now
+        
         return (x1, y1), (x2, y2)
 
     def total_energy(self, state):
         """
-        Calculate the total energy of the system using the original energy formula.
+        Calculate the total energy of the system.
+        Updated for the flipped coordinate system where positive y goes up.
         """
         theta1, theta2, omega1, omega2 = state
-
-        # Use the original energy calculation from simulation.py
-        # E[i] = 0.5 * m * (
-        #     2 * c1**2 * w1[i] ** 2
-        #     + c2**2 * w2[i] ** 2
-        #     + 2 * c1 * c2 * w1[i] * w2[i] * np.cos(t1[i] - t2[i])
-        # ) - m * g * (2 * c1 * np.cos(t1[i]) + c2 * np.cos(t2[i]))
-
+        
+        # Kinetic energy (same as before)
         kinetic = (
             0.5
             * self.m1
@@ -162,11 +150,13 @@ class DoublePendulum:
                 + 2 * self.l1 * self.l2 * omega1 * omega2 * np.cos(theta1 - theta2)
             )
         )
-
+        
+        # Potential energy (flipped sign due to y-coordinate flip)
+        # Now higher y means higher potential energy
         potential = (
-            -self.m1
+            self.m1
             * self.g
             * (2 * self.l1 * np.cos(theta1) + self.l2 * np.cos(theta2))
         )
-
+        
         return kinetic + potential
