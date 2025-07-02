@@ -19,11 +19,14 @@ DEFAULT_PALETTE = {
 
 # Preset initial conditions for interesting patterns
 INTERESTING_PRESETS = {
-    "chaos": np.array([np.pi / 2, np.pi / 4, 1.0, -0.5]),
-    "figure_eight": np.array([np.pi / 3, -np.pi / 3, 0.5, 0.5]),
-    "spiral": np.array([0.1, np.pi, 0.0, 2.0]),
-    "butterfly": np.array([np.pi / 6, 5 * np.pi / 6, 0.2, -0.2]),
-    "flower": np.array([np.pi / 4, 3 * np.pi / 4, 0.8, -0.8]),
+    "gravity_demo": np.array([np.pi / 6, np.pi / 8, 0.0, 0.0]),  # Clear gravity demonstration
+    "original": np.array([-np.pi / 3, -5 * np.pi / 6, 0.0, 0.0]),  # Original simulation.py values
+    "chaos": np.array([np.pi / 4, -np.pi / 3, 1.0, -0.5]),  # High energy chaos
+    "figure_eight": np.array([np.pi / 6, -np.pi / 6, 1.0, -1.0]),  # Symmetric motion
+    "spiral": np.array([0.3, np.pi / 4, 0.5, 2.0]),  # Spiral-like motion
+    "butterfly": np.array([np.pi / 8, -3 * np.pi / 8, 0.8, -0.8]),  # Butterfly pattern
+    "flower": np.array([np.pi / 5, -2 * np.pi / 5, 1.2, -1.2]),  # Flower-like pattern
+    "pendulum_swing": np.array([np.pi / 2, 0.0, 0.0, 0.0]),  # Classic pendulum swing
 }
 
 
