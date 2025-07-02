@@ -19,8 +19,12 @@ DEFAULT_PALETTE = {
 
 # Preset initial conditions for interesting patterns
 INTERESTING_PRESETS = {
-    "gravity_demo": np.array([np.pi / 6, np.pi / 8, 0.0, 0.0]),  # Clear gravity demonstration
-    "original": np.array([-np.pi / 3, -5 * np.pi / 6, 0.0, 0.0]),  # Original simulation.py values
+    "gravity_demo": np.array(
+        [np.pi / 6, np.pi / 8, 0.0, 0.0]
+    ),  # Clear gravity demonstration
+    "original": np.array(
+        [-np.pi / 3, -5 * np.pi / 6, 0.0, 0.0]
+    ),  # Original simulation.py values
     "chaos": np.array([np.pi / 4, -np.pi / 3, 1.0, -0.5]),  # High energy chaos
     "figure_eight": np.array([np.pi / 6, -np.pi / 6, 1.0, -1.0]),  # Symmetric motion
     "spiral": np.array([0.3, np.pi / 4, 0.5, 2.0]),  # Spiral-like motion
