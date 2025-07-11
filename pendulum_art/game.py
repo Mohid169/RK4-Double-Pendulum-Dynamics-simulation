@@ -23,25 +23,22 @@ class PendulumArtGame:
 
         # Create pendulum instance
         self.pendulum = DoublePendulum(l1=1.0, l2=0.5)
-
+        
         # Initial state: [theta1, theta2, omega1, omega2]
-        # Use the original simulation.py initial state that produces chaotic behavior
-        self.initial_state = np.array(
-            [-np.pi / 3, -5 * np.pi / 6, 0.0, 0.0]
-        )  # Original chaotic state
+        # Start with a reasonable default position
+        self.initial_state = np.array([np.pi/4, np.pi/6, 0.0, 0.0])  # Default starting position
         self.state = self.initial_state.copy()
+
+        # Game state management
+        self.game_state = "SETUP"  # "SETUP", "RUNNING", "PAUSED"
+        self.dragging_bob = None  # None, 1, or 2 for which bob is being dragged
+        self.mouse_pos = (0, 0)
 
         # Visual settings
         self.scale = 200  # pixels per meter
         self.show_pendulum = True
         self.show_help = False
-        self.paused = False
         self.painting = False
-
-        # Interactive setup mode
-        self.setup_mode = False
-        self.dragging_bob = None  # None, 1, or 2 for which bob is being dragged
-        self.mouse_pos = (0, 0)
 
         # Trail and canvas
         self.trail_points = []
@@ -72,13 +69,17 @@ class PendulumArtGame:
                 if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                     return False
                 elif event.key == pygame.K_SPACE:
-                    self.painting = True
+                    if self.game_state == "RUNNING":
+                        self.painting = True
                 elif event.key == pygame.K_h:
                     self.show_help = not self.show_help
                 elif event.key == pygame.K_p:
-                    self.paused = not self.paused
+                    if self.game_state == "RUNNING":
+                        self.game_state = "PAUSED"
+                    elif self.game_state == "PAUSED":
+                        self.game_state = "RUNNING"
                 elif event.key == pygame.K_r:
-                    self.reset()
+                    self.reset_to_setup()
                 elif event.key == pygame.K_c:
                     self.clear_canvas()
                 elif event.key == pygame.K_v:
@@ -87,10 +88,6 @@ class PendulumArtGame:
                     self.save_artwork()
                 elif event.key == pygame.K_l:
                     self.load_preset_dialog()
-                elif event.key == pygame.K_i:
-                    self.setup_mode = not self.setup_mode
-                    if self.setup_mode:
-                        self.paused = True  # Pause simulation during setup
                 elif pygame.K_1 <= event.key <= pygame.K_9:
                     key_str = str(event.key - pygame.K_0)
                     if key_str in self.palette:
@@ -105,24 +102,32 @@ class PendulumArtGame:
                     self.painting = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1 and self.setup_mode:  # Left click in setup mode
-                    self.start_dragging(event.pos)
+                if event.button == 1:  # Left click
+                    if self.game_state == "SETUP":
+                        # Check if clicking to start or dragging
+                        if self.try_start_dragging(event.pos):
+                            pass  # Started dragging
+                        else:
+                            # Click to start simulation
+                            self.start_simulation()
+                    elif self.game_state in ["RUNNING", "PAUSED"]:
+                        # In running state, click resets to setup
+                        self.reset_to_setup()
 
             elif event.type == pygame.MOUSEBUTTONUP:
-                if (
-                    event.button == 1 and self.setup_mode
-                ):  # Left click release in setup mode
+                if event.button == 1 and self.game_state == "SETUP":
                     self.stop_dragging()
 
             elif event.type == pygame.MOUSEMOTION:
                 self.mouse_pos = event.pos
-                if self.setup_mode and self.dragging_bob is not None:
+                if self.game_state == "SETUP" and self.dragging_bob is not None:
                     self.update_pendulum_from_mouse(event.pos)
 
         return True
 
     def update_physics(self, dt):
-        if not self.paused:
+        # Only update physics when running
+        if self.game_state == "RUNNING":
             # Update pendulum state using RK4
             self.state = self.pendulum.rk4_step(self.state, dt)
 
@@ -170,13 +175,13 @@ class PendulumArtGame:
                 rod_width=2,
                 bob_radius=6,
             )
-
-            # In setup mode, highlight bobs that can be dragged
-            if self.setup_mode:
+            
+            # Show setup feedback in setup mode
+            if self.game_state == "SETUP":
                 self.draw_setup_feedback()
 
-            # Draw trail
-            if len(self.trail_points) > 1:
+            # Draw trail only when running or paused
+            if self.game_state in ["RUNNING", "PAUSED"] and len(self.trail_points) > 1:
                 for i in range(1, len(self.trail_points)):
                     alpha = int(255 * (i / len(self.trail_points)))
                     color = (*self.current_color, alpha)
@@ -185,6 +190,10 @@ class PendulumArtGame:
                         trail_surf = pygame.Surface((3, 3), pygame.SRCALPHA)
                         trail_surf.fill(color)
                         self.screen.blit(trail_surf, self.trail_points[i])
+
+        # Draw setup instructions
+        if self.game_state == "SETUP":
+            self.draw_setup_instructions()
 
         # Draw UI
         self.draw_ui()
@@ -229,24 +238,60 @@ class PendulumArtGame:
                 self.screen, (255, 255, 0), p2, 15, 3
             )  # Yellow highlight
 
+    def draw_setup_instructions(self):
+        """Draw instructions for setup mode"""
+        # Semi-transparent background for instructions
+        instruction_bg = pygame.Surface((600, 120), pygame.SRCALPHA)
+        instruction_bg.fill((0, 0, 0, 150))
+        
+        # Center the instruction panel
+        x = (self.width - 600) // 2
+        y = 50
+        self.screen.blit(instruction_bg, (x, y))
+        
+        # Instructions text
+        instructions = [
+            "SETUP MODE",
+            "",
+            "Drag the pendulum bobs to set initial position",
+            "Click anywhere else to start the simulation",
+        ]
+        
+        for i, text in enumerate(instructions):
+            if text == "SETUP MODE":
+                color = (255, 255, 100)
+                font = self.font
+            elif text == "":
+                continue
+            else:
+                color = (255, 255, 255)
+                font = self.small_font
+                
+            surface = font.render(text, True, color)
+            text_x = x + (600 - surface.get_width()) // 2
+            text_y = y + 20 + i * 25
+            self.screen.blit(surface, (text_x, text_y))
+
     def draw_ui(self):
         # Status bar
         status_texts = [
+            f"State: {self.game_state}",
             f"Color: {list(self.palette.keys())[list(self.palette.values()).index(self.current_color)]}",
             f"Brush: {self.brush_size}",
-            f"{'Painting' if self.painting else 'Not Painting'}",
-            f"{'Paused' if self.paused else 'Running'}",
         ]
-
-        # Add setup mode status
-        if self.setup_mode:
-            status_texts.append("SETUP MODE: Click and drag pendulum bobs")
+        
+        # Add state-specific status
+        if self.game_state == "RUNNING":
+            status_texts.append(f"{'Painting' if self.painting else 'Not Painting'}")
+        elif self.game_state == "SETUP":
             if self.dragging_bob:
                 status_texts.append(f"Dragging Bob {self.dragging_bob}")
+            else:
+                status_texts.append("Click and drag bobs or click to start")
 
         y_offset = 10
         for text in status_texts:
-            color = (255, 255, 100) if "SETUP MODE" in text else (255, 255, 255)
+            color = (255, 255, 100) if "State:" in text else (255, 255, 255)
             surface = self.small_font.render(text, True, color)
             self.screen.blit(surface, (10, y_offset))
             y_offset += 20
@@ -277,33 +322,35 @@ class PendulumArtGame:
         help_text = [
             "DOUBLE PENDULUM ART - CONTROLS",
             "",
-            "SPACE - Hold to paint with pendulum tip",
-            "1-9 - Select color from palette",
-            "+/- - Change brush size",
-            "P - Pause/unpause simulation",
-            "R - Reset pendulum to initial position",
-            "C - Clear canvas (artwork)",
-            "V - Toggle pendulum visibility",
-            "I - Toggle interactive setup mode",
-            "S - Save current artwork",
-            "L - Load preset (if available)",
-            "H - Toggle this help",
-            "ESC/Q - Quit",
+            "SETUP MODE:",
+            "• Drag pendulum bobs to set initial position",
+            "• Click anywhere else to start simulation",
             "",
-            "INTERACTIVE SETUP:",
-            "Press I to enter setup mode, then click and",
-            "drag the pendulum bobs to set initial position.",
-            "Press I again to exit setup and start simulation.",
+            "SIMULATION MODE:",
+            "• SPACE - Hold to paint with pendulum tip",
+            "• 1-9 - Select color from palette",
+            "• +/- - Change brush size",
+            "• P - Pause/unpause simulation",
+            "• Click - Return to setup mode",
             "",
-            "Let the chaotic beauty of the double pendulum",
-            "create unique artistic patterns!",
+            "GENERAL:",
+            "• R - Reset to setup mode",
+            "• C - Clear canvas (artwork)",
+            "• V - Toggle pendulum visibility",
+            "• S - Save current artwork",
+            "• L - Load preset (if available)",
+            "• H - Toggle this help",
+            "• ESC/Q - Quit",
+            "",
+            "Experiment with different starting positions",
+            "to create unique chaotic art patterns!",
         ]
 
-        y_start = 80
+        y_start = 60
         for i, line in enumerate(help_text):
             if line == "DOUBLE PENDULUM ART - CONTROLS":
                 surface = self.font.render(line, True, (255, 255, 100))
-            elif line == "INTERACTIVE SETUP:":
+            elif line in ["SETUP MODE:", "SIMULATION MODE:", "GENERAL:"]:
                 surface = self.small_font.render(line, True, (100, 255, 100))
             elif line == "":
                 continue
@@ -311,12 +358,11 @@ class PendulumArtGame:
                 surface = self.small_font.render(line, True, (255, 255, 255))
 
             x = (self.width - surface.get_width()) // 2
-            self.screen.blit(surface, (x, y_start + i * 22))
+            self.screen.blit(surface, (x, y_start + i * 20))
 
     def reset(self):
-        """Reset pendulum to initial state"""
-        self.state = self.initial_state.copy()
-        self.trail_points.clear()
+        """Reset pendulum to initial state (legacy method)"""
+        self.reset_to_setup()
 
     def clear_canvas(self):
         """Clear the artwork canvas"""
@@ -365,38 +411,53 @@ class PendulumArtGame:
         pygame.quit()
         sys.exit()
 
-    def start_dragging(self, mouse_pos):
-        """Start dragging a pendulum bob if clicked near one"""
+    def try_start_dragging(self, mouse_pos):
+        """Try to start dragging a pendulum bob. Returns True if dragging started."""
         # Convert mouse position to world coordinates
         origin = (self.width // 2, self.height // 2)
         mouse_world = self.screen_to_world(mouse_pos, origin)
-
+        
         # Get current bob positions
         (x1, y1), (x2, y2) = self.pendulum.tip_positions(self.state)
-
+        
         # Check if mouse is near either bob (within 30 pixels)
         click_threshold = 30 / self.scale  # Convert pixels to world units
-
+        
         dist_to_bob1 = np.sqrt((mouse_world[0] - x1) ** 2 + (mouse_world[1] - y1) ** 2)
         dist_to_bob2 = np.sqrt((mouse_world[0] - x2) ** 2 + (mouse_world[1] - y2) ** 2)
-
+        
         if dist_to_bob1 < click_threshold:
             self.dragging_bob = 1
+            return True
         elif dist_to_bob2 < click_threshold:
             self.dragging_bob = 2
+            return True
         else:
-            self.dragging_bob = None
+            return False
+
+    def start_simulation(self):
+        """Start the physics simulation with current pendulum position"""
+        self.game_state = "RUNNING"
+        # Reset velocities to zero for clean start
+        self.state[2] = 0.0  # omega1
+        self.state[3] = 0.0  # omega2
+        # Save as initial state for potential reset
+        self.initial_state = self.state.copy()
+        # Clear trail for new simulation
+        self.trail_points.clear()
+
+    def reset_to_setup(self):
+        """Reset to setup mode for new initial conditions"""
+        self.game_state = "SETUP"
+        self.dragging_bob = None
+        self.painting = False
+        # Reset to a reasonable default position
+        self.state = np.array([np.pi/4, np.pi/6, 0.0, 0.0])
+        self.initial_state = self.state.copy()
+        self.trail_points.clear()
 
     def stop_dragging(self):
-        """Stop dragging and save the new initial state"""
-        if self.dragging_bob is not None:
-            # Save current state as new initial state
-            self.initial_state = self.state.copy()
-            # Reset velocities to zero for new initial state
-            self.initial_state[2] = 0.0  # omega1
-            self.initial_state[3] = 0.0  # omega2
-            self.state = self.initial_state.copy()
-
+        """Stop dragging"""
         self.dragging_bob = None
 
     def update_pendulum_from_mouse(self, mouse_pos):
