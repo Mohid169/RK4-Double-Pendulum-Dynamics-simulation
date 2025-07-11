@@ -205,19 +205,69 @@ class PendulumArtGame:
         pos1 = to_screen((x1, y1), (self.width, self.height), self.scale, offset=origin)
         pos2 = to_screen((x2, y2), (self.width, self.height), self.scale, offset=origin)
 
-        if self.dragging_bob == 1:
-            pygame.draw.circle(self.screen, (255, 255, 0), pos1, 15, 3)
-        elif self.dragging_bob == 2:
-            pygame.draw.circle(self.screen, (255, 255, 0), pos2, 15, 3)
+        # Draw constraint circles (valid drag areas)
+        pygame.draw.circle(self.screen, (40, 40, 40), origin, int(self.pendulum.l1 * self.scale), 1)
+        pygame.draw.circle(self.screen, (40, 40, 40), pos1, int(self.pendulum.l2 * self.scale), 1)
 
-        if self.dragging_bob is None:
+        # Enhanced bob visualization
+        if self.dragging_bob == 1:
+            # Dragging bob 1 - show it following mouse with constraint
+            constrained_pos = self.get_constrained_position(self.mouse_pos, origin, self.pendulum.l1)
+            
+            # Check if constrained (different from mouse position)
+            is_constrained = (abs(constrained_pos[0] - self.mouse_pos[0]) > 5 or 
+                             abs(constrained_pos[1] - self.mouse_pos[1]) > 5)
+            
+            # Draw ghost/preview at mouse position if constrained
+            if is_constrained:
+                pygame.draw.circle(self.screen, (255, 255, 0, 100), self.mouse_pos, 12)
+                pygame.draw.circle(self.screen, (255, 255, 0), self.mouse_pos, 12, 2)
+            
+            # Draw actual position
+            pygame.draw.circle(self.screen, (255, 255, 0), constrained_pos, 15, 3)
+            
+            # Draw constraint line
+            pygame.draw.line(self.screen, (255, 255, 0), origin, constrained_pos, 2)
+            
+        elif self.dragging_bob == 2:
+            # Dragging bob 2 - show it following mouse with constraint
+            constrained_pos = self.get_constrained_position(self.mouse_pos, pos1, self.pendulum.l2)
+            
+            # Check if constrained (different from mouse position)
+            is_constrained = (abs(constrained_pos[0] - self.mouse_pos[0]) > 5 or 
+                             abs(constrained_pos[1] - self.mouse_pos[1]) > 5)
+            
+            # Draw ghost/preview at mouse position if constrained
+            if is_constrained:
+                pygame.draw.circle(self.screen, (255, 255, 0, 100), self.mouse_pos, 12)
+                pygame.draw.circle(self.screen, (255, 255, 0), self.mouse_pos, 12, 2)
+            
+            # Draw actual position
+            pygame.draw.circle(self.screen, (255, 255, 0), constrained_pos, 15, 3)
+            
+            # Draw constraint line
+            pygame.draw.line(self.screen, (255, 255, 0), pos1, constrained_pos, 2)
+            
+        else:
+            # Not dragging - show hover effects
             mouse_dist1 = np.linalg.norm(np.array(self.mouse_pos) - np.array(pos1))
             mouse_dist2 = np.linalg.norm(np.array(self.mouse_pos) - np.array(pos2))
 
-            if mouse_dist1 < 30:
-                pygame.draw.circle(self.screen, (255, 255, 0), pos1, 15, 2)
-            elif mouse_dist2 < 30:
-                pygame.draw.circle(self.screen, (255, 255, 0), pos2, 15, 2)
+            # Larger, more obvious grab areas
+            if mouse_dist1 < 40:
+                pygame.draw.circle(self.screen, (255, 255, 0), pos1, 20, 3)
+                pygame.draw.circle(self.screen, (255, 255, 0, 50), pos1, 20)
+                # Show constraint preview
+                pygame.draw.circle(self.screen, (255, 255, 0, 30), origin, int(self.pendulum.l1 * self.scale), 2)
+            elif mouse_dist2 < 40:
+                pygame.draw.circle(self.screen, (255, 255, 0), pos2, 20, 3)
+                pygame.draw.circle(self.screen, (255, 255, 0, 50), pos2, 20)
+                # Show constraint preview
+                pygame.draw.circle(self.screen, (255, 255, 0, 30), pos1, int(self.pendulum.l2 * self.scale), 2)
+            else:
+                # Default state - show grabbable areas subtly
+                pygame.draw.circle(self.screen, (100, 100, 100), pos1, 15, 2)
+                pygame.draw.circle(self.screen, (100, 100, 100), pos2, 15, 2)
 
     def draw_setup_instructions(self):
         # Create a clean instruction panel
@@ -493,6 +543,22 @@ class PendulumArtGame:
         pygame.quit()
         sys.exit()
 
+    def get_constrained_position(self, mouse_pos, anchor_pos, max_distance):
+        """Get position constrained to a circle around anchor point"""
+        dx = mouse_pos[0] - anchor_pos[0]
+        dy = mouse_pos[1] - anchor_pos[1]
+        distance = np.sqrt(dx * dx + dy * dy)
+        
+        # Constrain to circle if outside radius
+        if distance > max_distance * self.scale:
+            scale_factor = (max_distance * self.scale) / distance
+            constrained_x = anchor_pos[0] + dx * scale_factor
+            constrained_y = anchor_pos[1] + dy * scale_factor
+            return (int(constrained_x), int(constrained_y))
+        else:
+            # Within radius - use mouse position directly
+            return mouse_pos
+
     def try_start_dragging(self, mouse_pos):
         origin = (self.width // 2, self.height // 2)
         (x1, y1), (x2, y2) = self.pendulum.tip_positions(self.state)
@@ -503,10 +569,11 @@ class PendulumArtGame:
         mouse_dist1 = np.linalg.norm(np.array(mouse_pos) - np.array(pos1))
         mouse_dist2 = np.linalg.norm(np.array(mouse_pos) - np.array(pos2))
 
-        if mouse_dist1 < 30:
+        # Larger grab areas for better UX
+        if mouse_dist1 < 40:
             self.dragging_bob = 1
             return True
-        elif mouse_dist2 < 30:
+        elif mouse_dist2 < 40:
             self.dragging_bob = 2
             return True
 
@@ -527,27 +594,31 @@ class PendulumArtGame:
 
     def update_pendulum_from_mouse(self, mouse_pos):
         origin = (self.width // 2, self.height // 2)
-        world_pos = self.screen_to_world(mouse_pos, origin)
-
+        
         if self.dragging_bob == 1:
-            distance = np.linalg.norm(world_pos)
-            if distance > 0:
-                world_pos = world_pos * (self.pendulum.l1 / distance)
-
+            # Get constrained position and convert to world coordinates
+            constrained_pos = self.get_constrained_position(mouse_pos, origin, self.pendulum.l1)
+            world_pos = self.screen_to_world(constrained_pos, origin)
+            
+            # Calculate angle from constrained position
             theta1 = np.arctan2(world_pos[0], world_pos[1])
             self.state[0] = theta1
 
         elif self.dragging_bob == 2:
+            # Get first bob position in screen coordinates
             (x1, y1), _ = self.pendulum.tip_positions(self.state)
+            pos1 = to_screen((x1, y1), (self.width, self.height), self.scale, offset=origin)
+            
+            # Get constrained position and convert to world coordinates
+            constrained_pos = self.get_constrained_position(mouse_pos, pos1, self.pendulum.l2)
+            world_pos = self.screen_to_world(constrained_pos, origin)
+            
+            # Calculate relative position and angle
             relative_pos = world_pos - np.array([x1, y1])
-
-            distance = np.linalg.norm(relative_pos)
-            if distance > 0:
-                relative_pos = relative_pos * (self.pendulum.l2 / distance)
-
             theta2 = np.arctan2(relative_pos[0], relative_pos[1])
             self.state[1] = theta2
 
+        # Reset velocities for clean setup
         self.state[2] = 0.0
         self.state[3] = 0.0
 
@@ -556,7 +627,7 @@ class PendulumArtGame:
         origin_x, origin_y = origin
 
         world_x = (screen_x - origin_x) / self.scale
-        world_y = (origin_y - screen_y) / self.scale
+        world_y = (screen_y - origin_y) / self.scale
 
         return np.array([world_x, world_y])
 
