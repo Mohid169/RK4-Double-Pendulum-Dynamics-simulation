@@ -13,6 +13,7 @@ DEFAULT_PALETTE = {
     "9": (255, 255, 255),
 }
 
+
 def generate_rainbow_palette(num_colors=9):
     palette = {}
     for i in range(num_colors):
@@ -20,6 +21,7 @@ def generate_rainbow_palette(num_colors=9):
         rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
         palette[str(i + 1)] = tuple(int(255 * c) for c in rgb)
     return palette
+
 
 def generate_warm_palette():
     return {
@@ -33,6 +35,7 @@ def generate_warm_palette():
         "8": (255, 192, 203),
         "9": (255, 255, 255),
     }
+
 
 def generate_cool_palette():
     return {

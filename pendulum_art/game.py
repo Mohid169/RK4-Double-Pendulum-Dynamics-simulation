@@ -202,12 +202,8 @@ class PendulumArtGame:
         origin = (self.width // 2, self.height // 2)
         (x1, y1), (x2, y2) = self.pendulum.tip_positions(self.state)
 
-        pos1 = to_screen(
-            (x1, y1), (self.width, self.height), self.scale, offset=origin
-        )
-        pos2 = to_screen(
-            (x2, y2), (self.width, self.height), self.scale, offset=origin
-        )
+        pos1 = to_screen((x1, y1), (self.width, self.height), self.scale, offset=origin)
+        pos2 = to_screen((x2, y2), (self.width, self.height), self.scale, offset=origin)
 
         if self.dragging_bob == 1:
             pygame.draw.circle(self.screen, (255, 255, 0), pos1, 15, 3)
@@ -229,26 +225,38 @@ class PendulumArtGame:
         panel_height = 120
         panel_x = (self.width - panel_width) // 2
         panel_y = 40
-        
+
         # Semi-transparent background
         panel_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
         panel_surface.fill((0, 0, 0, 180))
         self.screen.blit(panel_surface, (panel_x, panel_y))
-        
+
         # Border
-        pygame.draw.rect(self.screen, (100, 100, 100), 
-                        (panel_x, panel_y, panel_width, panel_height), 2)
-        
+        pygame.draw.rect(
+            self.screen,
+            (100, 100, 100),
+            (panel_x, panel_y, panel_width, panel_height),
+            2,
+        )
+
         # Instructions
         title = self.font.render("SETUP", True, (255, 255, 100))
-        instruction1 = self.small_font.render("Drag the pendulum bobs to set position", True, (255, 255, 255))
-        instruction2 = self.small_font.render("Click anywhere else to start", True, (255, 255, 255))
-        
+        instruction1 = self.small_font.render(
+            "Drag the pendulum bobs to set position", True, (255, 255, 255)
+        )
+        instruction2 = self.small_font.render(
+            "Click anywhere else to start", True, (255, 255, 255)
+        )
+
         # Center text
-        title_rect = title.get_rect(center=(panel_x + panel_width//2, panel_y + 25))
-        inst1_rect = instruction1.get_rect(center=(panel_x + panel_width//2, panel_y + 55))
-        inst2_rect = instruction2.get_rect(center=(panel_x + panel_width//2, panel_y + 80))
-        
+        title_rect = title.get_rect(center=(panel_x + panel_width // 2, panel_y + 25))
+        inst1_rect = instruction1.get_rect(
+            center=(panel_x + panel_width // 2, panel_y + 55)
+        )
+        inst2_rect = instruction2.get_rect(
+            center=(panel_x + panel_width // 2, panel_y + 80)
+        )
+
         self.screen.blit(title, title_rect)
         self.screen.blit(instruction1, inst1_rect)
         self.screen.blit(instruction2, inst2_rect)
@@ -257,22 +265,23 @@ class PendulumArtGame:
         # Status panel (top-left)
         if self.game_state == "SETUP":
             return  # Don't show UI controls in setup mode
-        
+
         # Create control panel
         panel_width = 200
         panel_height = 140
         panel_x = 10
         panel_y = 10
-        
+
         # Semi-transparent background
         panel_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
         panel_surface.fill((0, 0, 0, 160))
         self.screen.blit(panel_surface, (panel_x, panel_y))
-        
+
         # Border
-        pygame.draw.rect(self.screen, (80, 80, 80), 
-                        (panel_x, panel_y, panel_width, panel_height), 1)
-        
+        pygame.draw.rect(
+            self.screen, (80, 80, 80), (panel_x, panel_y, panel_width, panel_height), 1
+        )
+
         # Status
         if self.game_state == "RUNNING":
             status_text = "RUNNING"
@@ -280,43 +289,45 @@ class PendulumArtGame:
         elif self.game_state == "PAUSED":
             status_text = "PAUSED"
             status_color = (255, 255, 100)
-        
+
         status = self.small_font.render(status_text, True, status_color)
         self.screen.blit(status, (panel_x + 10, panel_y + 10))
-        
+
         # Paint status
         if self.painting:
             paint_text = self.small_font.render("🎨 PAINTING", True, (255, 255, 0))
             self.screen.blit(paint_text, (panel_x + 10, panel_y + 30))
         else:
-            hint_text = self.small_font.render("Hold SPACE to paint", True, (150, 150, 150))
+            hint_text = self.small_font.render(
+                "Hold SPACE to paint", True, (150, 150, 150)
+            )
             self.screen.blit(hint_text, (panel_x + 10, panel_y + 30))
-        
+
         # Controls
         y_offset = 55
         controls = [
             f"Brush: {self.brush_size} (+/-)",
             f"Spray: {self.spray_particles} ([/])",
         ]
-        
+
         for i, control in enumerate(controls):
             text = self.small_font.render(control, True, (200, 200, 200))
             self.screen.blit(text, (panel_x + 10, panel_y + y_offset + i * 18))
-        
+
         # Color preview with label
         color_y = panel_y + y_offset + 36
         color_text = self.small_font.render("Color:", True, (200, 200, 200))
         self.screen.blit(color_text, (panel_x + 10, color_y))
-        
+
         color_preview = pygame.Surface((20, 20))
         color_preview.fill(self.current_color)
         pygame.draw.rect(color_preview, (255, 255, 255), (0, 0, 20, 20), 1)
         self.screen.blit(color_preview, (panel_x + 60, color_y - 2))
-        
+
         # Quick controls hint
         hint_text = self.small_font.render("Press H for help", True, (120, 120, 120))
         self.screen.blit(hint_text, (panel_x + 10, panel_y + panel_height - 20))
-        
+
         # Color palette (bottom of screen)
         self.draw_color_palette()
 
@@ -324,42 +335,50 @@ class PendulumArtGame:
         """Draw color palette at bottom of screen"""
         if self.game_state == "SETUP":
             return
-            
+
         palette_width = 300
         palette_height = 40
         palette_x = (self.width - palette_width) // 2
         palette_y = self.height - palette_height - 10
-        
+
         # Background
-        palette_surface = pygame.Surface((palette_width, palette_height), pygame.SRCALPHA)
+        palette_surface = pygame.Surface(
+            (palette_width, palette_height), pygame.SRCALPHA
+        )
         palette_surface.fill((0, 0, 0, 140))
         self.screen.blit(palette_surface, (palette_x, palette_y))
-        
+
         # Border
-        pygame.draw.rect(self.screen, (80, 80, 80), 
-                        (palette_x, palette_y, palette_width, palette_height), 1)
-        
+        pygame.draw.rect(
+            self.screen,
+            (80, 80, 80),
+            (palette_x, palette_y, palette_width, palette_height),
+            1,
+        )
+
         # Color swatches
         swatch_size = 25
         start_x = palette_x + 15
         start_y = palette_y + 7
-        
+
         for i, (key, color) in enumerate(self.palette.items()):
             x = start_x + i * 30
-            
+
             # Color swatch
             swatch_rect = pygame.Rect(x, start_y, swatch_size, swatch_size)
             pygame.draw.rect(self.screen, color, swatch_rect)
-            
+
             # Highlight current color
             if color == self.current_color:
                 pygame.draw.rect(self.screen, (255, 255, 255), swatch_rect, 2)
             else:
                 pygame.draw.rect(self.screen, (100, 100, 100), swatch_rect, 1)
-            
+
             # Key number
             key_text = self.small_font.render(key, True, (255, 255, 255))
-            key_rect = key_text.get_rect(center=(x + swatch_size//2, start_y + swatch_size + 8))
+            key_rect = key_text.get_rect(
+                center=(x + swatch_size // 2, start_y + swatch_size + 8)
+            )
             self.screen.blit(key_text, key_rect)
 
     def draw_help(self):
@@ -374,63 +393,77 @@ class PendulumArtGame:
         panel_height = 450
         panel_x = (self.width - panel_width) // 2
         panel_y = (self.height - panel_height) // 2
-        
+
         # Background
         panel_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
         panel_surface.fill((20, 20, 20, 240))
         self.screen.blit(panel_surface, (panel_x, panel_y))
-        
+
         # Border
-        pygame.draw.rect(self.screen, (100, 100, 100), 
-                        (panel_x, panel_y, panel_width, panel_height), 2)
-        
+        pygame.draw.rect(
+            self.screen,
+            (100, 100, 100),
+            (panel_x, panel_y, panel_width, panel_height),
+            2,
+        )
+
         # Title
         title = self.font.render("CONTROLS & HELP", True, (255, 255, 100))
-        title_rect = title.get_rect(center=(panel_x + panel_width//2, panel_y + 30))
+        title_rect = title.get_rect(center=(panel_x + panel_width // 2, panel_y + 30))
         self.screen.blit(title, title_rect)
-        
+
         # Sections
         sections = [
-            ("SETUP MODE:", [
-                "• Drag pendulum bobs to set starting position",
-                "• Click anywhere else to start simulation"
-            ]),
-            ("PAINTING:", [
-                "• SPACE - Hold to paint with pendulum tip",
-                "• 1-9 - Select color palette",
-                "• +/- - Adjust brush size",
-                "• [ ] - Adjust spray particles"
-            ]),
-            ("SIMULATION:", [
-                "• P - Pause/Resume",
-                "• R - Reset to setup mode",
-                "• C - Clear canvas",
-                "• V - Toggle pendulum visibility"
-            ]),
-            ("FILE:", [
-                "• S - Save artwork as PNG",
-                "• Q/ESC - Quit application"
-            ])
+            (
+                "SETUP MODE:",
+                [
+                    "• Drag pendulum bobs to set starting position",
+                    "• Click anywhere else to start simulation",
+                ],
+            ),
+            (
+                "PAINTING:",
+                [
+                    "• SPACE - Hold to paint with pendulum tip",
+                    "• 1-9 - Select color palette",
+                    "• +/- - Adjust brush size",
+                    "• [ ] - Adjust spray particles",
+                ],
+            ),
+            (
+                "SIMULATION:",
+                [
+                    "• P - Pause/Resume",
+                    "• R - Reset to setup mode",
+                    "• C - Clear canvas",
+                    "• V - Toggle pendulum visibility",
+                ],
+            ),
+            ("FILE:", ["• S - Save artwork as PNG", "• Q/ESC - Quit application"]),
         ]
-        
+
         y_offset = 70
         for section_title, items in sections:
             # Section title
             section_text = self.small_font.render(section_title, True, (100, 255, 100))
             self.screen.blit(section_text, (panel_x + 30, panel_y + y_offset))
             y_offset += 25
-            
+
             # Items
             for item in items:
                 item_text = self.small_font.render(item, True, (200, 200, 200))
                 self.screen.blit(item_text, (panel_x + 50, panel_y + y_offset))
                 y_offset += 20
-            
+
             y_offset += 10  # Space between sections
-        
+
         # Close instruction
-        close_text = self.small_font.render("Press H again to close", True, (150, 150, 150))
-        close_rect = close_text.get_rect(center=(panel_x + panel_width//2, panel_y + panel_height - 20))
+        close_text = self.small_font.render(
+            "Press H again to close", True, (150, 150, 150)
+        )
+        close_rect = close_text.get_rect(
+            center=(panel_x + panel_width // 2, panel_y + panel_height - 20)
+        )
         self.screen.blit(close_text, close_rect)
 
     def reset(self):
@@ -464,12 +497,8 @@ class PendulumArtGame:
         origin = (self.width // 2, self.height // 2)
         (x1, y1), (x2, y2) = self.pendulum.tip_positions(self.state)
 
-        pos1 = to_screen(
-            (x1, y1), (self.width, self.height), self.scale, offset=origin
-        )
-        pos2 = to_screen(
-            (x2, y2), (self.width, self.height), self.scale, offset=origin
-        )
+        pos1 = to_screen((x1, y1), (self.width, self.height), self.scale, offset=origin)
+        pos2 = to_screen((x2, y2), (self.width, self.height), self.scale, offset=origin)
 
         mouse_dist1 = np.linalg.norm(np.array(mouse_pos) - np.array(pos1))
         mouse_dist2 = np.linalg.norm(np.array(mouse_pos) - np.array(pos2))
