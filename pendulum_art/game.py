@@ -23,10 +23,12 @@ class PendulumArtGame:
 
         # Create pendulum instance
         self.pendulum = DoublePendulum(l1=1.0, l2=0.5)
-        
+
         # Initial state: [theta1, theta2, omega1, omega2]
         # Start with a reasonable default position
-        self.initial_state = np.array([np.pi/4, np.pi/6, 0.0, 0.0])  # Default starting position
+        self.initial_state = np.array(
+            [np.pi / 4, np.pi / 6, 0.0, 0.0]
+        )  # Default starting position
         self.state = self.initial_state.copy()
 
         # Game state management
@@ -175,7 +177,7 @@ class PendulumArtGame:
                 rod_width=2,
                 bob_radius=6,
             )
-            
+
             # Show setup feedback in setup mode
             if self.game_state == "SETUP":
                 self.draw_setup_feedback()
@@ -243,12 +245,12 @@ class PendulumArtGame:
         # Semi-transparent background for instructions
         instruction_bg = pygame.Surface((600, 120), pygame.SRCALPHA)
         instruction_bg.fill((0, 0, 0, 150))
-        
+
         # Center the instruction panel
         x = (self.width - 600) // 2
         y = 50
         self.screen.blit(instruction_bg, (x, y))
-        
+
         # Instructions text
         instructions = [
             "SETUP MODE",
@@ -256,7 +258,7 @@ class PendulumArtGame:
             "Drag the pendulum bobs to set initial position",
             "Click anywhere else to start the simulation",
         ]
-        
+
         for i, text in enumerate(instructions):
             if text == "SETUP MODE":
                 color = (255, 255, 100)
@@ -266,7 +268,7 @@ class PendulumArtGame:
             else:
                 color = (255, 255, 255)
                 font = self.small_font
-                
+
             surface = font.render(text, True, color)
             text_x = x + (600 - surface.get_width()) // 2
             text_y = y + 20 + i * 25
@@ -279,7 +281,7 @@ class PendulumArtGame:
             f"Color: {list(self.palette.keys())[list(self.palette.values()).index(self.current_color)]}",
             f"Brush: {self.brush_size}",
         ]
-        
+
         # Add state-specific status
         if self.game_state == "RUNNING":
             status_texts.append(f"{'Painting' if self.painting else 'Not Painting'}")
@@ -416,16 +418,16 @@ class PendulumArtGame:
         # Convert mouse position to world coordinates
         origin = (self.width // 2, self.height // 2)
         mouse_world = self.screen_to_world(mouse_pos, origin)
-        
+
         # Get current bob positions
         (x1, y1), (x2, y2) = self.pendulum.tip_positions(self.state)
-        
+
         # Check if mouse is near either bob (within 30 pixels)
         click_threshold = 30 / self.scale  # Convert pixels to world units
-        
+
         dist_to_bob1 = np.sqrt((mouse_world[0] - x1) ** 2 + (mouse_world[1] - y1) ** 2)
         dist_to_bob2 = np.sqrt((mouse_world[0] - x2) ** 2 + (mouse_world[1] - y2) ** 2)
-        
+
         if dist_to_bob1 < click_threshold:
             self.dragging_bob = 1
             return True
@@ -452,7 +454,7 @@ class PendulumArtGame:
         self.dragging_bob = None
         self.painting = False
         # Reset to a reasonable default position
-        self.state = np.array([np.pi/4, np.pi/6, 0.0, 0.0])
+        self.state = np.array([np.pi / 4, np.pi / 6, 0.0, 0.0])
         self.initial_state = self.state.copy()
         self.trail_points.clear()
 
