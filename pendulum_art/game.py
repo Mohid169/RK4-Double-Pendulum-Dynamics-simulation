@@ -14,50 +14,62 @@ class PendulumArtGame:
         self.width = width
         self.height = height
         self.screen = pygame.display.set_mode((width, height))
-        pygame.display.set_caption("Double Pendulum Art - Press H for Help")
+        pygame.display.set_caption("Double Pendulum Art")
         self.clock = pygame.time.Clock()
+
+        # Fonts
+        self.font = pygame.font.Font(None, 36)
+        self.small_font = pygame.font.Font(None, 24)
 
         # Create pendulum instance
         self.pendulum = DoublePendulum(l1=1.0, l2=0.5)
-
+        
         # Initial state: [theta1, theta2, omega1, omega2]
         # Use the original simulation.py initial state that produces chaotic behavior
-        self.initial_state = np.array(
-            [-np.pi / 3, -5 * np.pi / 6, 0.0, 0.0]
-        )  # Original chaotic state
+        self.initial_state = np.array([-np.pi / 3, -5 * np.pi / 6, 0.0, 0.0])  # Original chaotic state
         self.state = self.initial_state.copy()
 
-        # Canvas for persistent painting
-        self.canvas = pygame.Surface((width, height), pygame.SRCALPHA)
-        self.canvas.fill((0, 0, 0, 0))  # Transparent background
-
-        # Art controls
-        self.painting = False
-        self.current_color = DEFAULT_PALETTE["1"]
-        self.brush_size = 3
-        self.palette = DEFAULT_PALETTE.copy()
-
-        # UI state
+        # Visual settings
+        self.scale = 200  # pixels per meter
         self.show_pendulum = True
         self.show_help = False
         self.paused = False
-        self.scale = 200  # pixels per meter
+        self.painting = False
 
-        # Trail for pendulum tip
-        self.trail_length = 500
+        # Interactive setup mode
+        self.setup_mode = False
+        self.dragging_bob = None  # None, 1, or 2 for which bob is being dragged
+        self.mouse_pos = (0, 0)
+
+        # Trail and canvas
         self.trail_points = []
+        self.trail_length = 500
+        self.canvas = pygame.Surface((width, height), pygame.SRCALPHA)
 
-        # Font for UI
-        pygame.font.init()
-        self.font = pygame.font.Font(None, 24)
-        self.small_font = pygame.font.Font(None, 18)
+        # Color and brush settings
+        self.current_color = (255, 255, 255)  # White
+        self.brush_size = 3
+        self.palette = {
+            "1": (255, 100, 100),  # Red
+            "2": (100, 255, 100),  # Green
+            "3": (100, 100, 255),  # Blue
+            "4": (255, 255, 100),  # Yellow
+            "5": (255, 100, 255),  # Magenta
+            "6": (100, 255, 255),  # Cyan
+            "7": (255, 165, 0),    # Orange
+            "8": (160, 100, 255),  # Purple
+            "9": (255, 255, 255),  # White
+        }
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
+
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
+                    return False
+                elif event.key == pygame.K_SPACE:
                     self.painting = True
                 elif event.key == pygame.K_h:
                     self.show_help = not self.show_help
@@ -73,19 +85,35 @@ class PendulumArtGame:
                     self.save_artwork()
                 elif event.key == pygame.K_l:
                     self.load_preset_dialog()
-                # Color palette (1-9 keys)
+                elif event.key == pygame.K_i:
+                    self.setup_mode = not self.setup_mode
+                    if self.setup_mode:
+                        self.paused = True  # Pause simulation during setup
                 elif pygame.K_1 <= event.key <= pygame.K_9:
                     key_str = str(event.key - pygame.K_0)
                     if key_str in self.palette:
                         self.current_color = self.palette[key_str]
-                # Brush size controls
                 elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
-                    self.brush_size = min(20, self.brush_size + 1)
+                    self.brush_size = min(10, self.brush_size + 1)
                 elif event.key == pygame.K_MINUS:
                     self.brush_size = max(1, self.brush_size - 1)
+
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
                     self.painting = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and self.setup_mode:  # Left click in setup mode
+                    self.start_dragging(event.pos)
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1 and self.setup_mode:  # Left click release in setup mode
+                    self.stop_dragging()
+
+            elif event.type == pygame.MOUSEMOTION:
+                self.mouse_pos = event.pos
+                if self.setup_mode and self.dragging_bob is not None:
+                    self.update_pendulum_from_mouse(event.pos)
 
         return True
 
@@ -138,6 +166,10 @@ class PendulumArtGame:
                 rod_width=2,
                 bob_radius=6,
             )
+            
+            # In setup mode, highlight bobs that can be dragged
+            if self.setup_mode:
+                self.draw_setup_feedback()
 
             # Draw trail
             if len(self.trail_points) > 1:
@@ -159,6 +191,31 @@ class PendulumArtGame:
 
         pygame.display.flip()
 
+    def draw_setup_feedback(self):
+        """Draw visual feedback for setup mode"""
+        origin = (self.width // 2, self.height // 2)
+        (x1, y1), (x2, y2) = self.pendulum.tip_positions(self.state)
+        
+        # Convert to screen coordinates
+        from pendulum_art.renderer import to_screen
+        p1 = to_screen((x1, y1), (self.width, self.height), self.scale, offset=origin)
+        p2 = to_screen((x2, y2), (self.width, self.height), self.scale, offset=origin)
+        
+        # Get mouse position for hover effects
+        mouse_world = self.screen_to_world(self.mouse_pos, origin)
+        click_threshold = 30 / self.scale
+        
+        # Check if mouse is near bobs
+        dist_to_bob1 = np.sqrt((mouse_world[0] - x1)**2 + (mouse_world[1] - y1)**2)
+        dist_to_bob2 = np.sqrt((mouse_world[0] - x2)**2 + (mouse_world[1] - y2)**2)
+        
+        # Draw highlights
+        if self.dragging_bob == 1 or (self.dragging_bob is None and dist_to_bob1 < click_threshold):
+            pygame.draw.circle(self.screen, (255, 255, 0), p1, 15, 3)  # Yellow highlight
+            
+        if self.dragging_bob == 2 or (self.dragging_bob is None and dist_to_bob2 < click_threshold):
+            pygame.draw.circle(self.screen, (255, 255, 0), p2, 15, 3)  # Yellow highlight
+
     def draw_ui(self):
         # Status bar
         status_texts = [
@@ -167,10 +224,17 @@ class PendulumArtGame:
             f"{'Painting' if self.painting else 'Not Painting'}",
             f"{'Paused' if self.paused else 'Running'}",
         ]
+        
+        # Add setup mode status
+        if self.setup_mode:
+            status_texts.append("SETUP MODE: Click and drag pendulum bobs")
+            if self.dragging_bob:
+                status_texts.append(f"Dragging Bob {self.dragging_bob}")
 
         y_offset = 10
         for text in status_texts:
-            surface = self.small_font.render(text, True, (255, 255, 255))
+            color = (255, 255, 100) if "SETUP MODE" in text else (255, 255, 255)
+            surface = self.small_font.render(text, True, color)
             self.screen.blit(surface, (10, y_offset))
             y_offset += 20
 
@@ -201,32 +265,40 @@ class PendulumArtGame:
             "DOUBLE PENDULUM ART - CONTROLS",
             "",
             "SPACE - Hold to paint with pendulum tip",
-            "1-5 - Select color from palette",
+            "1-9 - Select color from palette",
             "+/- - Change brush size",
             "P - Pause/unpause simulation",
             "R - Reset pendulum to initial position",
             "C - Clear canvas (artwork)",
             "V - Toggle pendulum visibility",
+            "I - Toggle interactive setup mode",
             "S - Save current artwork",
             "L - Load preset (if available)",
             "H - Toggle this help",
             "ESC/Q - Quit",
             "",
+            "INTERACTIVE SETUP:",
+            "Press I to enter setup mode, then click and",
+            "drag the pendulum bobs to set initial position.",
+            "Press I again to exit setup and start simulation.",
+            "",
             "Let the chaotic beauty of the double pendulum",
             "create unique artistic patterns!",
         ]
 
-        y_start = 100
+        y_start = 80
         for i, line in enumerate(help_text):
             if line == "DOUBLE PENDULUM ART - CONTROLS":
                 surface = self.font.render(line, True, (255, 255, 100))
+            elif line == "INTERACTIVE SETUP:":
+                surface = self.small_font.render(line, True, (100, 255, 100))
             elif line == "":
                 continue
             else:
                 surface = self.small_font.render(line, True, (255, 255, 255))
 
             x = (self.width - surface.get_width()) // 2
-            self.screen.blit(surface, (x, y_start + i * 25))
+            self.screen.blit(surface, (x, y_start + i * 22))
 
     def reset(self):
         """Reset pendulum to initial state"""
@@ -279,6 +351,88 @@ class PendulumArtGame:
 
         pygame.quit()
         sys.exit()
+
+    def start_dragging(self, mouse_pos):
+        """Start dragging a pendulum bob if clicked near one"""
+        # Convert mouse position to world coordinates
+        origin = (self.width // 2, self.height // 2)
+        mouse_world = self.screen_to_world(mouse_pos, origin)
+        
+        # Get current bob positions
+        (x1, y1), (x2, y2) = self.pendulum.tip_positions(self.state)
+        
+        # Check if mouse is near either bob (within 30 pixels)
+        click_threshold = 30 / self.scale  # Convert pixels to world units
+        
+        dist_to_bob1 = np.sqrt((mouse_world[0] - x1)**2 + (mouse_world[1] - y1)**2)
+        dist_to_bob2 = np.sqrt((mouse_world[0] - x2)**2 + (mouse_world[1] - y2)**2)
+        
+        if dist_to_bob1 < click_threshold:
+            self.dragging_bob = 1
+        elif dist_to_bob2 < click_threshold:
+            self.dragging_bob = 2
+        else:
+            self.dragging_bob = None
+
+    def stop_dragging(self):
+        """Stop dragging and save the new initial state"""
+        if self.dragging_bob is not None:
+            # Save current state as new initial state
+            self.initial_state = self.state.copy()
+            # Reset velocities to zero for new initial state
+            self.initial_state[2] = 0.0  # omega1
+            self.initial_state[3] = 0.0  # omega2
+            self.state = self.initial_state.copy()
+            
+        self.dragging_bob = None
+
+    def update_pendulum_from_mouse(self, mouse_pos):
+        """Update pendulum angles based on mouse position while dragging"""
+        if self.dragging_bob is None:
+            return
+            
+        # Convert mouse position to world coordinates
+        origin = (self.width // 2, self.height // 2)
+        mouse_world = self.screen_to_world(mouse_pos, origin)
+        mx, my = mouse_world
+        
+        if self.dragging_bob == 1:
+            # Dragging first bob - calculate theta1
+            # theta1 = atan2(x, y) where (0,0) is pivot
+            theta1 = np.arctan2(mx, my)
+            
+            # Keep theta2 relative to theta1 (maintain second pendulum orientation)
+            current_theta1 = self.state[0]
+            current_theta2 = self.state[1]
+            relative_theta2 = current_theta2 - current_theta1
+            
+            self.state[0] = theta1
+            self.state[1] = theta1 + relative_theta2
+            
+        elif self.dragging_bob == 2:
+            # Dragging second bob - calculate theta2
+            # First, we need the position of the first bob
+            theta1 = self.state[0]
+            x1 = self.pendulum.l1 * np.sin(theta1)
+            y1 = self.pendulum.l1 * np.cos(theta1)
+            
+            # Calculate theta2 based on vector from first bob to mouse
+            dx = mx - x1
+            dy = my - y1
+            theta2 = np.arctan2(dx, dy)
+            
+            self.state[1] = theta2
+
+    def screen_to_world(self, screen_pos, origin):
+        """Convert screen coordinates to world coordinates"""
+        sx, sy = screen_pos
+        ox, oy = origin
+        
+        # Convert to world coordinates (note: screen y increases downward)
+        world_x = (sx - ox) / self.scale
+        world_y = (sy - oy) / self.scale
+        
+        return world_x, world_y
 
 
 def main():
