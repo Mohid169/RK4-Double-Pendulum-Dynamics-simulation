@@ -42,14 +42,13 @@ class PendulumArtGame:
         self.show_help = False
         self.painting = False
 
-        # Trail and canvas
-        self.trail_points = []
-        self.trail_length = 500
+        # Canvas for artwork (no trail system)
         self.canvas = pygame.Surface((width, height), pygame.SRCALPHA)
 
         # Color and brush settings
         self.current_color = (255, 255, 255)  # White
         self.brush_size = 3
+        self.spray_particles = 8  # Number of particles per spray
         self.palette = {
             "1": (255, 100, 100),  # Red
             "2": (100, 255, 100),  # Green
@@ -98,6 +97,10 @@ class PendulumArtGame:
                     self.brush_size = min(10, self.brush_size + 1)
                 elif event.key == pygame.K_MINUS:
                     self.brush_size = max(1, self.brush_size - 1)
+                elif event.key == pygame.K_RIGHTBRACKET:  # ] key
+                    self.spray_particles = min(20, self.spray_particles + 2)
+                elif event.key == pygame.K_LEFTBRACKET:   # [ key
+                    self.spray_particles = max(2, self.spray_particles - 2)
 
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
@@ -133,29 +136,61 @@ class PendulumArtGame:
             # Update pendulum state using RK4
             self.state = self.pendulum.rk4_step(self.state, dt)
 
-            # Get pendulum tip position
-            (x1, y1), (x2, y2) = self.pendulum.tip_positions(self.state)
+            # Paint with spray effect if space is held
+            if self.painting:
+                # Get pendulum tip position
+                (x1, y1), (x2, y2) = self.pendulum.tip_positions(self.state)
 
-            # Convert to screen coordinates
-            origin = (self.width // 2, self.height // 2)
-            tip_screen = to_screen(
-                (x2, y2), (self.width, self.height), self.scale, offset=origin
-            )
-
-            # Add to trail
-            self.trail_points.append(tip_screen)
-            if len(self.trail_points) > self.trail_length:
-                self.trail_points.pop(0)
-
-            # Paint if space is held
-            if (
-                self.painting
-                and 0 <= tip_screen[0] < self.width
-                and 0 <= tip_screen[1] < self.height
-            ):
-                pygame.draw.circle(
-                    self.canvas, self.current_color, tip_screen, self.brush_size
+                # Convert to screen coordinates
+                origin = (self.width // 2, self.height // 2)
+                tip_screen = to_screen(
+                    (x2, y2), (self.width, self.height), self.scale, offset=origin
                 )
+
+                # Create spray paint effect
+                if (
+                    0 <= tip_screen[0] < self.width
+                    and 0 <= tip_screen[1] < self.height
+                ):
+                    self.create_spray_effect(tip_screen)
+
+    def create_spray_effect(self, center_pos):
+        """Create a spray paint effect at the given position"""
+        import random
+        
+        cx, cy = center_pos
+        
+        # Create multiple particles for spray effect
+        for _ in range(self.spray_particles):
+            # Random offset from center
+            angle = random.uniform(0, 2 * np.pi)
+            distance = random.uniform(0, self.brush_size * 2)
+            
+            offset_x = int(distance * np.cos(angle))
+            offset_y = int(distance * np.sin(angle))
+            
+            particle_x = cx + offset_x
+            particle_y = cy + offset_y
+            
+            # Random particle size (1-3 pixels)
+            particle_size = random.randint(1, 3)
+            
+            # Slight color variation for more organic look
+            r, g, b = self.current_color
+            r = max(0, min(255, r + random.randint(-20, 20)))
+            g = max(0, min(255, g + random.randint(-20, 20)))
+            b = max(0, min(255, b + random.randint(-20, 20)))
+            particle_color = (r, g, b)
+            
+            # Random alpha for transparency effect
+            alpha = random.randint(100, 255)
+            
+            # Draw particle with alpha
+            if (0 <= particle_x < self.width and 0 <= particle_y < self.height):
+                particle_surf = pygame.Surface((particle_size * 2, particle_size * 2), pygame.SRCALPHA)
+                pygame.draw.circle(particle_surf, (*particle_color, alpha), 
+                                 (particle_size, particle_size), particle_size)
+                self.canvas.blit(particle_surf, (particle_x - particle_size, particle_y - particle_size))
 
     def render(self):
         # Clear screen with dark background
@@ -177,21 +212,10 @@ class PendulumArtGame:
                 rod_width=2,
                 bob_radius=6,
             )
-
+            
             # Show setup feedback in setup mode
             if self.game_state == "SETUP":
                 self.draw_setup_feedback()
-
-            # Draw trail only when running or paused
-            if self.game_state in ["RUNNING", "PAUSED"] and len(self.trail_points) > 1:
-                for i in range(1, len(self.trail_points)):
-                    alpha = int(255 * (i / len(self.trail_points)))
-                    color = (*self.current_color, alpha)
-                    if i > 0:
-                        # Create a surface for alpha blending
-                        trail_surf = pygame.Surface((3, 3), pygame.SRCALPHA)
-                        trail_surf.fill(color)
-                        self.screen.blit(trail_surf, self.trail_points[i])
 
         # Draw setup instructions
         if self.game_state == "SETUP":
@@ -285,6 +309,8 @@ class PendulumArtGame:
         # Add state-specific status
         if self.game_state == "RUNNING":
             status_texts.append(f"{'Painting' if self.painting else 'Not Painting'}")
+            if self.painting:
+                status_texts.append(f"Spray: {self.spray_particles} particles")
         elif self.game_state == "SETUP":
             if self.dragging_bob:
                 status_texts.append(f"Dragging Bob {self.dragging_bob}")
@@ -332,6 +358,7 @@ class PendulumArtGame:
             "• SPACE - Hold to paint with pendulum tip",
             "• 1-9 - Select color from palette",
             "• +/- - Change brush size",
+            "• [ ] - Adjust spray particles",
             "• P - Pause/unpause simulation",
             "• Click - Return to setup mode",
             "",
@@ -445,8 +472,6 @@ class PendulumArtGame:
         self.state[3] = 0.0  # omega2
         # Save as initial state for potential reset
         self.initial_state = self.state.copy()
-        # Clear trail for new simulation
-        self.trail_points.clear()
 
     def reset_to_setup(self):
         """Reset to setup mode for new initial conditions"""
@@ -456,7 +481,6 @@ class PendulumArtGame:
         # Reset to a reasonable default position
         self.state = np.array([np.pi / 4, np.pi / 6, 0.0, 0.0])
         self.initial_state = self.state.copy()
-        self.trail_points.clear()
 
     def stop_dragging(self):
         """Stop dragging"""
