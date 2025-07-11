@@ -99,7 +99,7 @@ class PendulumArtGame:
                     self.brush_size = max(1, self.brush_size - 1)
                 elif event.key == pygame.K_RIGHTBRACKET:  # ] key
                     self.spray_particles = min(20, self.spray_particles + 2)
-                elif event.key == pygame.K_LEFTBRACKET:   # [ key
+                elif event.key == pygame.K_LEFTBRACKET:  # [ key
                     self.spray_particles = max(2, self.spray_particles - 2)
 
             elif event.type == pygame.KEYUP:
@@ -148,49 +148,55 @@ class PendulumArtGame:
                 )
 
                 # Create spray paint effect
-                if (
-                    0 <= tip_screen[0] < self.width
-                    and 0 <= tip_screen[1] < self.height
-                ):
+                if 0 <= tip_screen[0] < self.width and 0 <= tip_screen[1] < self.height:
                     self.create_spray_effect(tip_screen)
 
     def create_spray_effect(self, center_pos):
         """Create a spray paint effect at the given position"""
         import random
-        
+
         cx, cy = center_pos
-        
+
         # Create multiple particles for spray effect
         for _ in range(self.spray_particles):
             # Random offset from center
             angle = random.uniform(0, 2 * np.pi)
             distance = random.uniform(0, self.brush_size * 2)
-            
+
             offset_x = int(distance * np.cos(angle))
             offset_y = int(distance * np.sin(angle))
-            
+
             particle_x = cx + offset_x
             particle_y = cy + offset_y
-            
+
             # Random particle size (1-3 pixels)
             particle_size = random.randint(1, 3)
-            
+
             # Slight color variation for more organic look
             r, g, b = self.current_color
             r = max(0, min(255, r + random.randint(-20, 20)))
             g = max(0, min(255, g + random.randint(-20, 20)))
             b = max(0, min(255, b + random.randint(-20, 20)))
             particle_color = (r, g, b)
-            
+
             # Random alpha for transparency effect
             alpha = random.randint(100, 255)
-            
+
             # Draw particle with alpha
-            if (0 <= particle_x < self.width and 0 <= particle_y < self.height):
-                particle_surf = pygame.Surface((particle_size * 2, particle_size * 2), pygame.SRCALPHA)
-                pygame.draw.circle(particle_surf, (*particle_color, alpha), 
-                                 (particle_size, particle_size), particle_size)
-                self.canvas.blit(particle_surf, (particle_x - particle_size, particle_y - particle_size))
+            if 0 <= particle_x < self.width and 0 <= particle_y < self.height:
+                particle_surf = pygame.Surface(
+                    (particle_size * 2, particle_size * 2), pygame.SRCALPHA
+                )
+                pygame.draw.circle(
+                    particle_surf,
+                    (*particle_color, alpha),
+                    (particle_size, particle_size),
+                    particle_size,
+                )
+                self.canvas.blit(
+                    particle_surf,
+                    (particle_x - particle_size, particle_y - particle_size),
+                )
 
     def render(self):
         # Clear screen with dark background
@@ -212,7 +218,7 @@ class PendulumArtGame:
                 rod_width=2,
                 bob_radius=6,
             )
-            
+
             # Show setup feedback in setup mode
             if self.game_state == "SETUP":
                 self.draw_setup_feedback()
