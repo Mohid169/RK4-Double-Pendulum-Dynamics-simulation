@@ -5,6 +5,7 @@ from pendulum_art.physics import DoublePendulum
 from pendulum_art.renderer import draw_pendulum, to_screen
 from pendulum_art.utils import DEFAULT_PALETTE
 import time
+import os
 
 
 class PendulumArtGame:
@@ -34,6 +35,14 @@ class PendulumArtGame:
         self.painting = False
 
         self.canvas = pygame.Surface((width, height), pygame.SRCALPHA)
+
+        # Video recording setup
+        self.recording = False
+        self.recorded_frames = []
+        self.recording_fps = 30
+        self.recording_start_time = 0
+        self.max_recording_time = 30  # seconds
+        self.frame_count = 0
 
         self.current_color = (255, 255, 255)
         self.brush_size = 3
@@ -76,6 +85,11 @@ class PendulumArtGame:
                     self.show_pendulum = not self.show_pendulum
                 elif event.key == pygame.K_s:
                     self.save_artwork()
+                elif event.key == pygame.K_F1:  # F1 to start/stop recording
+                    self.toggle_recording()
+                elif event.key == pygame.K_F2:  # F2 to save recorded video
+                    if self.recorded_frames:
+                        self.save_video()
                 elif pygame.K_1 <= event.key <= pygame.K_9:
                     key_str = str(event.key - pygame.K_0)
                     if key_str in self.palette:
@@ -113,6 +127,96 @@ class PendulumArtGame:
                     self.update_pendulum_from_mouse(event.pos)
 
         return True
+
+    def toggle_recording(self):
+        """Toggle video recording on/off"""
+        if not self.recording:
+            # Start recording
+            self.recording = True
+            self.recorded_frames = []
+            self.recording_start_time = time.time()
+            self.frame_count = 0
+            print("🎬 Recording started! Press F1 to stop, F2 to save video.")
+        else:
+            # Stop recording
+            self.recording = False
+            recording_duration = time.time() - self.recording_start_time
+            print(f"🎬 Recording stopped! Captured {len(self.recorded_frames)} frames in {recording_duration:.1f}s")
+            if self.recorded_frames:
+                print("Press F2 to save the video, or F1 to start a new recording.")
+
+    def capture_frame(self):
+        """Capture current frame for video recording"""
+        if self.recording:
+            # Check if we've hit the max recording time
+            if time.time() - self.recording_start_time >= self.max_recording_time:
+                print(f"🎬 Maximum recording time ({self.max_recording_time}s) reached. Stopping recording.")
+                self.recording = False
+                return
+
+            # Capture the current screen
+            frame_surface = self.screen.copy()
+            # Convert to a format suitable for video encoding
+            frame_array = pygame.surfarray.array3d(frame_surface)
+            # Transpose to get correct orientation (pygame uses (width, height, channels))
+            frame_array = np.transpose(frame_array, (1, 0, 2))
+            self.recorded_frames.append(frame_array)
+            self.frame_count += 1
+
+    def save_video(self):
+        """Save recorded frames as a video file"""
+        if not self.recorded_frames:
+            print("❌ No frames to save!")
+            return
+
+        try:
+            # Try to import imageio for video creation
+            import imageio
+            
+            # Create filename with timestamp
+            timestamp = int(time.time())
+            filename = f"pendulum_demo_{timestamp}.mp4"
+            
+            print(f"🎬 Saving video with {len(self.recorded_frames)} frames...")
+            
+            # Create video writer
+            with imageio.get_writer(filename, fps=self.recording_fps) as writer:
+                for frame in self.recorded_frames:
+                    writer.append_data(frame)
+            
+            print(f"✅ Video saved as {filename}")
+            
+            # Clear recorded frames to free memory
+            self.recorded_frames = []
+            
+        except ImportError:
+            print("❌ imageio not installed. Installing it now...")
+            print("Run: pip install imageio[ffmpeg]")
+            print("Then press F2 again to save the video.")
+            
+            # Save as individual PNG frames as fallback
+            self.save_frames_as_images()
+            
+        except Exception as e:
+            print(f"❌ Error saving video: {e}")
+            print("Saving as individual frames instead...")
+            self.save_frames_as_images()
+
+    def save_frames_as_images(self):
+        """Fallback: save frames as individual PNG images"""
+        timestamp = int(time.time())
+        frames_dir = f"pendulum_frames_{timestamp}"
+        os.makedirs(frames_dir, exist_ok=True)
+        
+        print(f"💾 Saving {len(self.recorded_frames)} frames to {frames_dir}/")
+        
+        for i, frame in enumerate(self.recorded_frames):
+            # Convert numpy array back to pygame surface
+            frame_surface = pygame.surfarray.make_surface(np.transpose(frame, (1, 0, 2)))
+            pygame.image.save(frame_surface, f"{frames_dir}/frame_{i:04d}.png")
+        
+        print(f"✅ Frames saved! You can create a video with:")
+        print(f"ffmpeg -framerate {self.recording_fps} -i {frames_dir}/frame_%04d.png -c:v libx264 -pix_fmt yuv420p pendulum_demo_{timestamp}.mp4")
 
     def update_physics(self, dt):
         if self.game_state == "RUNNING":
@@ -192,11 +296,35 @@ class PendulumArtGame:
             self.draw_setup_instructions()
 
         self.draw_ui()
+        
+        # Draw recording indicator
+        if self.recording:
+            self.draw_recording_indicator()
 
         if self.show_help:
             self.draw_help()
 
         pygame.display.flip()
+        
+        # Capture frame after rendering
+        self.capture_frame()
+
+    def draw_recording_indicator(self):
+        """Draw recording indicator in top-right corner"""
+        # Blinking red circle
+        if int(time.time() * 2) % 2:  # Blink every 0.5 seconds
+            pygame.draw.circle(self.screen, (255, 0, 0), (self.width - 30, 30), 10)
+        
+        # Recording text
+        recording_time = time.time() - self.recording_start_time
+        time_text = f"REC {recording_time:.1f}s"
+        text_surface = self.small_font.render(time_text, True, (255, 0, 0))
+        self.screen.blit(text_surface, (self.width - 120, 20))
+        
+        # Frame count
+        frame_text = f"Frames: {len(self.recorded_frames)}"
+        frame_surface = self.small_font.render(frame_text, True, (255, 255, 255))
+        self.screen.blit(frame_surface, (self.width - 120, 45))
 
     def draw_setup_feedback(self):
         origin = (self.width // 2, self.height // 2)
@@ -487,6 +615,14 @@ class PendulumArtGame:
                     "• R - Reset to setup mode",
                     "• C - Clear canvas",
                     "• V - Toggle pendulum visibility",
+                ],
+            ),
+            (
+                "RECORDING:",
+                [
+                    "• F1 - Start/Stop video recording",
+                    "• F2 - Save recorded video",
+                    "• Max 30 seconds per recording",
                 ],
             ),
             ("FILE:", ["• S - Save artwork as PNG", "• Q/ESC - Quit application"]),
