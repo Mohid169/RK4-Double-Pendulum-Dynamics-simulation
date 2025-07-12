@@ -135,6 +135,11 @@ assets/demos/
 # But keep the demo GIF for README
 !assets/demos/Demo.gif
 
+# Build and distribution files
+build/
+dist/
+*.spec
+
 # IDE
 .vscode/
 .idea/
