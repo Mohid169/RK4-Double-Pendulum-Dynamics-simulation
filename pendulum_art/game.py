@@ -141,7 +141,9 @@ class PendulumArtGame:
             # Stop recording
             self.recording = False
             recording_duration = time.time() - self.recording_start_time
-            print(f"🎬 Recording stopped! Captured {len(self.recorded_frames)} frames in {recording_duration:.1f}s")
+            print(
+                f"🎬 Recording stopped! Captured {len(self.recorded_frames)} frames in {recording_duration:.1f}s"
+            )
             if self.recorded_frames:
                 print("Press F2 to save the video, or F1 to start a new recording.")
 
@@ -150,7 +152,9 @@ class PendulumArtGame:
         if self.recording:
             # Check if we've hit the max recording time
             if time.time() - self.recording_start_time >= self.max_recording_time:
-                print(f"🎬 Maximum recording time ({self.max_recording_time}s) reached. Stopping recording.")
+                print(
+                    f"🎬 Maximum recording time ({self.max_recording_time}s) reached. Stopping recording."
+                )
                 self.recording = False
                 return
 
@@ -172,31 +176,31 @@ class PendulumArtGame:
         try:
             # Try to import imageio for video creation
             import imageio
-            
+
             # Create filename with timestamp
             timestamp = int(time.time())
             filename = f"pendulum_demo_{timestamp}.mp4"
-            
+
             print(f"🎬 Saving video with {len(self.recorded_frames)} frames...")
-            
+
             # Create video writer
             with imageio.get_writer(filename, fps=self.recording_fps) as writer:
                 for frame in self.recorded_frames:
                     writer.append_data(frame)
-            
+
             print(f"✅ Video saved as {filename}")
-            
+
             # Clear recorded frames to free memory
             self.recorded_frames = []
-            
+
         except ImportError:
             print("❌ imageio not installed. Installing it now...")
             print("Run: pip install imageio[ffmpeg]")
             print("Then press F2 again to save the video.")
-            
+
             # Save as individual PNG frames as fallback
             self.save_frames_as_images()
-            
+
         except Exception as e:
             print(f"❌ Error saving video: {e}")
             print("Saving as individual frames instead...")
@@ -207,16 +211,20 @@ class PendulumArtGame:
         timestamp = int(time.time())
         frames_dir = f"pendulum_frames_{timestamp}"
         os.makedirs(frames_dir, exist_ok=True)
-        
+
         print(f"💾 Saving {len(self.recorded_frames)} frames to {frames_dir}/")
-        
+
         for i, frame in enumerate(self.recorded_frames):
             # Convert numpy array back to pygame surface
-            frame_surface = pygame.surfarray.make_surface(np.transpose(frame, (1, 0, 2)))
+            frame_surface = pygame.surfarray.make_surface(
+                np.transpose(frame, (1, 0, 2))
+            )
             pygame.image.save(frame_surface, f"{frames_dir}/frame_{i:04d}.png")
-        
+
         print(f"✅ Frames saved! You can create a video with:")
-        print(f"ffmpeg -framerate {self.recording_fps} -i {frames_dir}/frame_%04d.png -c:v libx264 -pix_fmt yuv420p pendulum_demo_{timestamp}.mp4")
+        print(
+            f"ffmpeg -framerate {self.recording_fps} -i {frames_dir}/frame_%04d.png -c:v libx264 -pix_fmt yuv420p pendulum_demo_{timestamp}.mp4"
+        )
 
     def update_physics(self, dt):
         if self.game_state == "RUNNING":
@@ -296,7 +304,7 @@ class PendulumArtGame:
             self.draw_setup_instructions()
 
         self.draw_ui()
-        
+
         # Draw recording indicator
         if self.recording:
             self.draw_recording_indicator()
@@ -305,7 +313,7 @@ class PendulumArtGame:
             self.draw_help()
 
         pygame.display.flip()
-        
+
         # Capture frame after rendering
         self.capture_frame()
 
@@ -314,13 +322,13 @@ class PendulumArtGame:
         # Blinking red circle
         if int(time.time() * 2) % 2:  # Blink every 0.5 seconds
             pygame.draw.circle(self.screen, (255, 0, 0), (self.width - 30, 30), 10)
-        
+
         # Recording text
         recording_time = time.time() - self.recording_start_time
         time_text = f"REC {recording_time:.1f}s"
         text_surface = self.small_font.render(time_text, True, (255, 0, 0))
         self.screen.blit(text_surface, (self.width - 120, 20))
-        
+
         # Frame count
         frame_text = f"Frames: {len(self.recorded_frames)}"
         frame_surface = self.small_font.render(frame_text, True, (255, 255, 255))
@@ -334,48 +342,60 @@ class PendulumArtGame:
         pos2 = to_screen((x2, y2), (self.width, self.height), self.scale, offset=origin)
 
         # Draw constraint circles (valid drag areas)
-        pygame.draw.circle(self.screen, (40, 40, 40), origin, int(self.pendulum.l1 * self.scale), 1)
-        pygame.draw.circle(self.screen, (40, 40, 40), pos1, int(self.pendulum.l2 * self.scale), 1)
+        pygame.draw.circle(
+            self.screen, (40, 40, 40), origin, int(self.pendulum.l1 * self.scale), 1
+        )
+        pygame.draw.circle(
+            self.screen, (40, 40, 40), pos1, int(self.pendulum.l2 * self.scale), 1
+        )
 
         # Enhanced bob visualization
         if self.dragging_bob == 1:
             # Dragging bob 1 - show it following mouse with constraint
-            constrained_pos = self.get_constrained_position(self.mouse_pos, origin, self.pendulum.l1)
-            
+            constrained_pos = self.get_constrained_position(
+                self.mouse_pos, origin, self.pendulum.l1
+            )
+
             # Check if constrained (different from mouse position)
-            is_constrained = (abs(constrained_pos[0] - self.mouse_pos[0]) > 5 or 
-                             abs(constrained_pos[1] - self.mouse_pos[1]) > 5)
-            
+            is_constrained = (
+                abs(constrained_pos[0] - self.mouse_pos[0]) > 5
+                or abs(constrained_pos[1] - self.mouse_pos[1]) > 5
+            )
+
             # Draw ghost/preview at mouse position if constrained
             if is_constrained:
                 pygame.draw.circle(self.screen, (255, 255, 0, 100), self.mouse_pos, 12)
                 pygame.draw.circle(self.screen, (255, 255, 0), self.mouse_pos, 12, 2)
-            
+
             # Draw actual position
             pygame.draw.circle(self.screen, (255, 255, 0), constrained_pos, 15, 3)
-            
+
             # Draw constraint line
             pygame.draw.line(self.screen, (255, 255, 0), origin, constrained_pos, 2)
-            
+
         elif self.dragging_bob == 2:
             # Dragging bob 2 - show it following mouse with constraint
-            constrained_pos = self.get_constrained_position(self.mouse_pos, pos1, self.pendulum.l2)
-            
+            constrained_pos = self.get_constrained_position(
+                self.mouse_pos, pos1, self.pendulum.l2
+            )
+
             # Check if constrained (different from mouse position)
-            is_constrained = (abs(constrained_pos[0] - self.mouse_pos[0]) > 5 or 
-                             abs(constrained_pos[1] - self.mouse_pos[1]) > 5)
-            
+            is_constrained = (
+                abs(constrained_pos[0] - self.mouse_pos[0]) > 5
+                or abs(constrained_pos[1] - self.mouse_pos[1]) > 5
+            )
+
             # Draw ghost/preview at mouse position if constrained
             if is_constrained:
                 pygame.draw.circle(self.screen, (255, 255, 0, 100), self.mouse_pos, 12)
                 pygame.draw.circle(self.screen, (255, 255, 0), self.mouse_pos, 12, 2)
-            
+
             # Draw actual position
             pygame.draw.circle(self.screen, (255, 255, 0), constrained_pos, 15, 3)
-            
+
             # Draw constraint line
             pygame.draw.line(self.screen, (255, 255, 0), pos1, constrained_pos, 2)
-            
+
         else:
             # Not dragging - show hover effects
             mouse_dist1 = np.linalg.norm(np.array(self.mouse_pos) - np.array(pos1))
@@ -386,12 +406,24 @@ class PendulumArtGame:
                 pygame.draw.circle(self.screen, (255, 255, 0), pos1, 20, 3)
                 pygame.draw.circle(self.screen, (255, 255, 0, 50), pos1, 20)
                 # Show constraint preview
-                pygame.draw.circle(self.screen, (255, 255, 0, 30), origin, int(self.pendulum.l1 * self.scale), 2)
+                pygame.draw.circle(
+                    self.screen,
+                    (255, 255, 0, 30),
+                    origin,
+                    int(self.pendulum.l1 * self.scale),
+                    2,
+                )
             elif mouse_dist2 < 40:
                 pygame.draw.circle(self.screen, (255, 255, 0), pos2, 20, 3)
                 pygame.draw.circle(self.screen, (255, 255, 0, 50), pos2, 20)
                 # Show constraint preview
-                pygame.draw.circle(self.screen, (255, 255, 0, 30), pos1, int(self.pendulum.l2 * self.scale), 2)
+                pygame.draw.circle(
+                    self.screen,
+                    (255, 255, 0, 30),
+                    pos1,
+                    int(self.pendulum.l2 * self.scale),
+                    2,
+                )
             else:
                 # Default state - show grabbable areas subtly
                 pygame.draw.circle(self.screen, (100, 100, 100), pos1, 15, 2)
@@ -684,7 +716,7 @@ class PendulumArtGame:
         dx = mouse_pos[0] - anchor_pos[0]
         dy = mouse_pos[1] - anchor_pos[1]
         distance = np.sqrt(dx * dx + dy * dy)
-        
+
         # Constrain to circle if outside radius
         if distance > max_distance * self.scale:
             scale_factor = (max_distance * self.scale) / distance
@@ -730,12 +762,14 @@ class PendulumArtGame:
 
     def update_pendulum_from_mouse(self, mouse_pos):
         origin = (self.width // 2, self.height // 2)
-        
+
         if self.dragging_bob == 1:
             # Get constrained position and convert to world coordinates
-            constrained_pos = self.get_constrained_position(mouse_pos, origin, self.pendulum.l1)
+            constrained_pos = self.get_constrained_position(
+                mouse_pos, origin, self.pendulum.l1
+            )
             world_pos = self.screen_to_world(constrained_pos, origin)
-            
+
             # Calculate angle from constrained position
             theta1 = np.arctan2(world_pos[0], world_pos[1])
             self.state[0] = theta1
@@ -743,12 +777,16 @@ class PendulumArtGame:
         elif self.dragging_bob == 2:
             # Get first bob position in screen coordinates
             (x1, y1), _ = self.pendulum.tip_positions(self.state)
-            pos1 = to_screen((x1, y1), (self.width, self.height), self.scale, offset=origin)
-            
+            pos1 = to_screen(
+                (x1, y1), (self.width, self.height), self.scale, offset=origin
+            )
+
             # Get constrained position and convert to world coordinates
-            constrained_pos = self.get_constrained_position(mouse_pos, pos1, self.pendulum.l2)
+            constrained_pos = self.get_constrained_position(
+                mouse_pos, pos1, self.pendulum.l2
+            )
             world_pos = self.screen_to_world(constrained_pos, origin)
-            
+
             # Calculate relative position and angle
             relative_pos = world_pos - np.array([x1, y1])
             theta2 = np.arctan2(relative_pos[0], relative_pos[1])
