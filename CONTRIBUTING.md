@@ -144,17 +144,8 @@ Brief description of changes
 - Create a web interface
 - Add physics parameter controls (gravity, damping, etc.)
 
-### Advanced
-- Implement GPU acceleration for faster simulation
-- Add machine learning for pattern classification
-- Create VR/AR interface
-- Implement distributed computing for batch generation
-- Add real-time collaboration features
 
 ## Questions?
 
 Feel free to open an issue with the "question" label if you have any questions about contributing!
 
-## Attribution
-
-This Contributing guide is adapted from Facebook's Draft.js contributing guide and other open source projects. 
