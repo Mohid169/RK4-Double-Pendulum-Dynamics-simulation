@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
-"""
-Main entry point for Double Pendulum Art.
-
-This script provides a simple way to launch the application.
-"""
 
 import sys
 import os
 
-# Add the current directory to Python path for local imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:

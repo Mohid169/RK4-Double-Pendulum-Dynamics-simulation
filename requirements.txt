@@ -1,10 +1,2 @@
-# Core dependencies for Double Pendulum Art
 numpy>=1.20.0
-pygame>=2.0.0
-matplotlib>=3.5.0
-
-# Optional dependencies for enhanced functionality
-# Uncomment if needed:
-# pillow>=8.0.0        # For additional image format support
-# scipy>=1.7.0         # For advanced numerical methods
-# jupyter>=1.0.0       # For Jupyter notebook examples 
+pygame>=2.0.0 
