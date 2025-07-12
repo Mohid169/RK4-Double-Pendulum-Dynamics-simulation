@@ -139,6 +139,8 @@ assets/demos/
 build/
 dist/
 *.spec
+# But keep our build configuration
+!build_executable.spec
 
 # IDE
 .vscode/
