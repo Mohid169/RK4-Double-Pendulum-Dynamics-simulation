@@ -129,14 +129,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Application specific
-*.png
-*.mp4
-*.avi
-*.mov
-pendulum_art_*.png
-pendulum_demo_*.mp4
-pendulum_frames_*/
+# Application specific - generated files go in assets/
+assets/artwork/
+assets/demos/
+# But keep the demo GIF for README
+!assets/demos/Demo.gif
 
 # IDE
 .vscode/

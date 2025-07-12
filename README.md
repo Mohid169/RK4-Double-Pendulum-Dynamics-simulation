@@ -6,7 +6,7 @@
 
 An interactive physics simulation and artistic visualization application that transforms the chaotic beauty of double pendulum dynamics into stunning digital art.
 
-![Demo](pendulum_demo_1752198950.mp4)
+![Demo](assets/demos/Demo.gif)
 
 ## ✨ Features
 
