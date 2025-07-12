@@ -72,19 +72,6 @@ The simulation uses the exact equations of motion for a double pendulum system:
 - **Energy Conservation**: Realistic pendulum behavior
 - **Numerical Stability**: Robust against computational errors
 
-## 🎨 Art Creation
-
-### Techniques
-- **Color Transitions**: Switch colors mid-painting for layered effects
-- **Brush Variations**: Dynamic brush sizing for varied stroke weights
-- **Spray Effects**: Adjustable particle systems for texture
-- **Strategic Pausing**: Pause physics to paint specific areas
-
-### Examples
-- Abstract expressionist patterns from chaotic motion
-- Geometric designs from controlled initial conditions
-- Time-lapse videos of pattern evolution
-- Multi-layered compositions with color progression
 
 ## 🛠️ Development
 
