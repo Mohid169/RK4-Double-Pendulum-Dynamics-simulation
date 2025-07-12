@@ -119,13 +119,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 - **Graphics**: OpenGL support recommended
 - **OS**: Windows 10+, macOS 10.14+, Linux (Ubuntu 18.04+)
 
-## 🤝 Community
-
-- **GitHub Issues**: Bug reports and feature requests
-- **Discussions**: Share artwork and get help
-- **Discord**: Real-time community chat
-- **Reddit**: r/DoublePendulumArt for artwork sharing
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

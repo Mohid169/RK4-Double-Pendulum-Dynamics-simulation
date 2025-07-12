@@ -46,7 +46,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "pendulum-art=pendulum_art.main:main",
+            "pendulum-art=pendulum_art:main",
         ],
     },
     include_package_data=True,

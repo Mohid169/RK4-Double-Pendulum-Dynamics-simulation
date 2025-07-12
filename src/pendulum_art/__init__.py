@@ -25,10 +25,29 @@ from .physics import DoublePendulum
 from .renderer import draw_pendulum, to_screen
 from .utils import DEFAULT_PALETTE
 
+def main():
+    """Main entry point for the application."""
+    print("🎨 Double Pendulum Art")
+    print("=" * 30)
+    print("Starting the interactive pendulum art application...")
+    print("Press H in the game window for help and controls.")
+    print()
+    
+    try:
+        game = PendulumArtGame()
+        game.run()
+    except KeyboardInterrupt:
+        print("\n👋 Thanks for using Double Pendulum Art!")
+    except Exception as e:
+        print(f"❌ An error occurred: {e}")
+        import sys
+        sys.exit(1)
+
 __all__ = [
     "PendulumArtGame",
     "DoublePendulum", 
     "draw_pendulum",
     "to_screen",
     "DEFAULT_PALETTE",
+    "main",
 ] 
