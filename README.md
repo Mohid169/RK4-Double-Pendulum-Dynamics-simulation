@@ -14,7 +14,7 @@ Watch the mesmerizing patterns created by chaotic pendulum motion:
   <img src="assets/demos/Demo.gif" alt="Double Pendulum Art Demo" width="600"/>
 </div>
 
-*The demo shows the pendulum painting beautiful, unpredictable patterns as it moves through phase space. Each trace is unique due to the chaotic nature of the double pendulum system.*
+*The demo shows the pendulum painting beautiful, unpredictable patterns as it moves through phase space. Each trace is unique due to the chaotic nature of the double pendulum system. Demo was compressed 10 mb to shown in the README.*
 
 ## ✨ Features
 
