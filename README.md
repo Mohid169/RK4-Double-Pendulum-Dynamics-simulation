@@ -6,7 +6,15 @@
 
 An interactive physics simulation and artistic visualization application that transforms the chaotic beauty of double pendulum dynamics into stunning digital art.
 
-![Demo](assets/demos/Demo.gif)
+## 🎬 Demo
+
+Watch the mesmerizing patterns created by chaotic pendulum motion:
+
+<div align="center">
+  <img src="assets/demos/Demo.gif" alt="Double Pendulum Art Demo" width="600"/>
+</div>
+
+*The demo shows the pendulum painting beautiful, unpredictable patterns as it moves through phase space. Each trace is unique due to the chaotic nature of the double pendulum system.*
 
 ## ✨ Features
 
@@ -37,6 +45,8 @@ pendulum-art
 2. **Start**: Click anywhere to begin simulation  
 3. **Paint**: Hold **SPACE** to paint with the pendulum tip
 4. **Record**: Press **F1** to start recording, **F2** to save
+
+> 💡 **Pro Tip**: Try starting with pendulum bobs near vertical positions for dramatic, high-energy patterns like shown in the demo above!
 
 ## 🎮 Controls
 
@@ -83,7 +93,9 @@ The simulation uses the exact equations of motion for a double pendulum system:
 │   ├── renderer.py           # Graphics rendering
 │   └── utils.py              # Utilities and constants
 ├── scripts/                   # Utility scripts
-│   └── create_demo.py        # Automated demo creation
+│   ├── create_demo.py        # Automated demo creation
+│   ├── convert_to_gif.py     # Video to GIF conversion
+│   └── build_executable.py  # Standalone app builder
 ├── docs/                     # Documentation
 └── tests/                    # Test suite
 ```
