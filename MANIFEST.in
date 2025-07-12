@@ -1,0 +1,13 @@
+include README.md
+include LICENSE
+include CONTRIBUTING.md
+include requirements.txt
+include physics_derivation
+recursive-include src/pendulum_art *.py
+recursive-include docs *.md
+recursive-include scripts *.py
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude *.png
+global-exclude *.mp4 
