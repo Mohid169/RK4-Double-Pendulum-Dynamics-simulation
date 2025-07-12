@@ -188,10 +188,3 @@ Create multiple artworks programmatically:
 from pendulum_art import PendulumArtGame
 # Your custom automation code here
 ```
-
-## Getting Help
-
-- Press **H** in-game for quick reference
-- Check [Installation Guide](INSTALLATION.md) for setup issues
-- Report bugs on [GitHub Issues](https://github.com/yourusername/RK4-Double-Pendulum-Dynamics-simulation/issues)
-- Join our community for tips and artwork sharing 
